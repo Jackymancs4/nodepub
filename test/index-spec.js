@@ -209,6 +209,31 @@ describe('Create EPUB with a valid document', () => {
       });
     });
 
+    describe('When writing the final EPUB is requested with a callback', () => {
+      beforeEach(() => {
+        try {
+          fs.unlinkSync('test/test-book.epub');
+        } catch (e) {
+          // Ignore error when it does not already exist
+        }
+      });
+
+      it('the file should now exist', async () => {
+        async function callback(archive, resolveCallback) {
+          const output = fs.createWriteStream('test/test-book.epub');
+          archive.pipe(output);
+
+          output.on('close', () => {
+            resolveCallback()
+          });
+        }
+
+        await epub.writeEPUBHandler(callback);
+        const result = fs.statSync('test/test-book.epub').isFile();
+        expect(result).to.equal(true);
+      });
+    });
+
     describe('With a section excluded from the contents', () => {
       beforeEach(async () => {
         epub = nodepub.document(validMetadata);
