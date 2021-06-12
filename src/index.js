@@ -147,13 +147,15 @@ const document = (metadata, generateContentsCallback) => {
     });
   };
 
-  // Writes the EPUB. The filename should not have an extention.
-  self.writeEPUB = async (folder, filename) => {
+  /**
+   * Writes the EPUB.
+   * 
+   * @param {(archive: Stream, resolveCallback: (value: any) => void) => void} callback
+   */
+  self.writeEPUBHandler = async (callback) => {
     const files = await self.getFilesForEPUB();
 
     // Start creating the zip.
-    await makeFolder(folder);
-    const output = fs.createWriteStream(`${folder}/${filename}.epub`);
     const archive = zip('zip', { store: false });
     archive.on('error', (archiveErr) => {
       throw archiveErr;
@@ -161,8 +163,7 @@ const document = (metadata, generateContentsCallback) => {
 
     await new Promise((resolveWrite) => {
       // Wait for file descriptor to be written.
-      archive.pipe(output);
-      output.on('close', () => resolveWrite());
+      callback(archive, resolveWrite);
 
       // Write the file contents.
       files.forEach((file) => {
@@ -177,6 +178,33 @@ const document = (metadata, generateContentsCallback) => {
       archive.finalize();
     });
   };
+
+  /**
+   * @param {string} folder 
+   * @param {string} filename 
+   * @returns {(archive: Archiver, resolveCallback: () => void) => void}
+   */
+  self.writeEPUBDefault = (folder, filename) => {
+    return async (archive, resolveCallback) => {
+      await makeFolder(folder);
+
+      const output = fs.createWriteStream(`${folder}/${filename}.epub`);
+      archive.pipe(output);
+      output.on('close', () => {
+        resolveCallback()
+      });
+    }
+  }
+
+  /**
+   * Writes the EPUB. The filename should not have an extention.
+   * 
+   * @param {string} folder 
+   * @param {string} filename 
+   */
+  self.writeEPUB = async (folder, filename) => {
+    await self.writeEPUBHandler(self.writeEPUBDefault(folder, filename));
+  }
 
   return self;
 };
