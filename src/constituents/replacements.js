@@ -1,5 +1,3 @@
-const moment = require('moment');
-
 // Replace a single tag.
 const tagReplace = (original, tag, value) => {
   const fullTag = `[[${tag}]]`;
@@ -8,7 +6,7 @@ const tagReplace = (original, tag, value) => {
 
 // Do all in-line replacements needed.
 const replacements = (document, original) => {
-  const modified = moment().format('YYYY-MM-DD');
+  const modified = new Date().toISOString();
   let result = original;
   result = tagReplace(result, 'EOL', '\n');
   result = tagReplace(result, 'COVER', document.metadata.cover);
