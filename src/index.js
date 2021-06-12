@@ -131,8 +131,12 @@ const document = (metadata, generateContentsCallback) => {
     return syncFiles;
   };
 
-  // Writes the files needed for the EPUB into a folder structure.
-  // For valid EPUB files the 'mimetype' MUST be the first entry in an EPUB and uncompressed.
+  /**
+   * Writes the files needed for the EPUB into a folder structure.
+   * For valid EPUB files the 'mimetype' MUST be the first entry in an EPUB and uncompressed.
+   * 
+   * @param {string} folder 
+   */
   self.writeFilesForEPUB = async (folder) => {
     const files = await self.getFilesForEPUB();
     await makeFolder(folder);
@@ -177,6 +181,34 @@ const document = (metadata, generateContentsCallback) => {
       // Done.
       archive.finalize();
     });
+  };
+
+  /**
+   * @returns {import('archiver').Archiver}
+   */
+  self.getArchiveForEPUB = async () => {
+    const files = await self.getFilesForEPUB();
+
+    // Start creating the zip.
+    const archive = zip('zip', { store: false });
+    archive.on('error', (archiveErr) => {
+      throw archiveErr;
+    });
+
+    new Promise((resolveWrite) => {
+      // Write the file contents.
+      files.forEach((file) => {
+        if (file.folder.length > 0) {
+          archive.append(file.content, { name: `${file.folder}/${file.name}`, store: !file.compress });
+        } else {
+          archive.append(file.content, { name: file.name, store: !file.compress });
+        }
+      });
+
+      // Done.
+      archive.finalize();
+    });
+    return archive;
   };
 
   /**
