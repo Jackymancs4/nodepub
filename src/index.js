@@ -131,8 +131,12 @@ const document = (metadata, generateContentsCallback) => {
     return syncFiles;
   };
 
-  // Writes the files needed for the EPUB into a folder structure.
-  // For valid EPUB files the 'mimetype' MUST be the first entry in an EPUB and uncompressed.
+  /**
+   * Writes the files needed for the EPUB into a folder structure.
+   * For valid EPUB files the 'mimetype' MUST be the first entry in an EPUB and uncompressed.
+   * 
+   * @param {string} folder 
+   */
   self.writeFilesForEPUB = async (folder) => {
     const files = await self.getFilesForEPUB();
     await makeFolder(folder);
