@@ -180,6 +180,34 @@ const document = (metadata, generateContentsCallback) => {
   };
 
   /**
+   * @returns {import('archiver').Archiver}
+   */
+  self.getArchiveForEPUB = async () => {
+    const files = await self.getFilesForEPUB();
+
+    // Start creating the zip.
+    const archive = zip('zip', { store: false });
+    archive.on('error', (archiveErr) => {
+      throw archiveErr;
+    });
+
+    new Promise((resolveWrite) => {
+      // Write the file contents.
+      files.forEach((file) => {
+        if (file.folder.length > 0) {
+          archive.append(file.content, { name: `${file.folder}/${file.name}`, store: !file.compress });
+        } else {
+          archive.append(file.content, { name: file.name, store: !file.compress });
+        }
+      });
+
+      // Done.
+      archive.finalize();
+    });
+    return archive;
+  };
+
+  /**
    * @param {string} folder 
    * @param {string} filename 
    * @returns {(archive: Archiver, resolveCallback: () => void) => void}
